@@ -1,0 +1,44 @@
+
+<!DOCTYPE html>
+<html lang="en-US">
+<meta charset="UTF-8">
+
+<title>Parallel Coordinates Prototype</title>
+<body>
+
+<script src="../d3.min.js"></script>
+<script src="d3.parcoords.js"></script>
+<link rel="stylesheet" type="text/css" href="d3.parcoords.css">
+<div id="example1" class="parcoords" style="width:860px;height:400px"></div>
+
+<script>
+
+ // quantitative color scale
+var blue_to_brown = d3.scale.linear()
+  .domain([9, 50])
+  .range(["steelblue", "brown"])
+  .interpolate(d3.interpolateLab);
+
+var color = function(d) { return blue_to_brown(d['economy (mpg)']); };
+
+// interact with this variable from a javascript console
+var parcoords = d3.parcoords()("#example1")
+    .color(color)
+    .alpha(0.4);
+
+// load csv file and create the chart
+d3.csv('data/cars.csv', function(data) {
+  parcoords// optional: use right here: "=d3.parcoords()("#example1")"
+    .data(data)
+    .hideAxis(["name"])
+    .composite("darker") //darken
+    .render()
+    .shadows()
+    .reorderable()
+    .brushMode("1D-axes")  // enable brushing
+    //.interactive();  // command line mode
+});
+
+</script>
+</body>
+</html>
