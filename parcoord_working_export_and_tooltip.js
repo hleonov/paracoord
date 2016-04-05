@@ -22,7 +22,6 @@ d3.parcoords = function(config) {
     smoothness: 0.25,
     showControlPoints: false,
     reorder_map: {},
-    minValues: {},
     hideAxis : []
   };
   extend(__, config);
@@ -175,14 +174,8 @@ pc.autoscale = function() {
         .range([h()+1, 1]);
     },
     "number": function(k) {
-       // console.log("min array: ",d3.min(__.data));
-        var newMin = d3.min(__.data, function(d) { return +d[k]; }) -10;
-        __.minValues[k] = newMin;
-
-        console.log("newMin: ",k, newMin)
-        return d3.scale.linear()
-        //.domain(d3.extent(__.data, function(d) { return +d[k]; }))
-        .domain([newMin, d3.max(__.data, function(d) { return +d[k]; })])
+      return d3.scale.linear()
+        .domain(d3.extent(__.data, function(d) { return +d[k]; }))
         .range([h()+1, 1]);
     },
     "string": function(k) {
@@ -516,18 +509,11 @@ function paths(data, ctx) {
 };
 
 function single_path(d, ctx) {
-    //var arrMin = d3.min(__.data);
-    //console.log(arrMin)
 	__.dimensions.map(function(p, i) {
-        if (d[p] == "") {
-            console.log("single path: ", p,  __.minValues[p] );
-            d[p] = __.minValues[p];
-        }
-        var yval = yscale[p](d[p]);
 		if (i == 0) {
-			ctx.moveTo(position(p), yval);//yscale[p](d[p]));
+			ctx.moveTo(position(p), yscale[p](d[p]));
 		} else {
-			ctx.lineTo(position(p), yval);//yscale[p](d[p]));
+			ctx.lineTo(position(p), yscale[p](d[p]));
 		}
 	});
 }

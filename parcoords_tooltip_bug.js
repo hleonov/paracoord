@@ -22,7 +22,6 @@ d3.parcoords = function(config) {
     smoothness: 0.25,
     showControlPoints: false,
     reorder_map: {},
-    minValues: {},
     hideAxis : []
   };
   extend(__, config);
@@ -46,8 +45,10 @@ d3.parcoords = function(config) {
     .append("svg")
       .attr("width", __.width)
       .attr("height", __.height)
-    .append("svg:g")
-      .attr("transform", "translate(" + __.margin.left + "," + __.margin.top + ")");
+     // .attr("height", h()+40) //extend svg to have space for missing values - but it's uselss to add to a g element
+      .attr("transform", "translate(" + __.margin.left + "," + __.margin.top + ")")
+     //.append("svg:g")
+      .attr("id", "plot_container")
 
   return pc;
 };
@@ -71,25 +72,7 @@ var events = d3.dispatch.apply(this,["render", "resize", "highlight", "brush", "
     ctx = {},
     canvas = {},
     clusterCentroids = [];
-    /*pc.detectDimensionTypes = function(data) {
-     var types = {};
-     d3.keys(data[0])
-     .forEach(function(col) {
-     types[col] = pc.toTypeCoerceNumbers(data[0][col]);
-     });
-     return types;
-     };
-var __.reorder_map = function(){
-        //console.log(d, i);
-        var tmp = {};
-        d3.keys(__.data[0]).forEach(function(col) {
-            tmp[col] = i
-        })
-        console.log(tmp)
-        return tmp;
-    };
-    console.log(__.reorder_map[1])
-*/
+
 // side effects for setters
 var side_effects = d3.dispatch.apply(this,d3.keys(__))
   .on("composite", function(d) { ctx.foreground.globalCompositeOperation = d.value; })
@@ -175,14 +158,8 @@ pc.autoscale = function() {
         .range([h()+1, 1]);
     },
     "number": function(k) {
-       // console.log("min array: ",d3.min(__.data));
-        var newMin = d3.min(__.data, function(d) { return +d[k]; }) -10;
-        __.minValues[k] = newMin;
-
-        console.log("newMin: ",k, newMin)
-        return d3.scale.linear()
-        //.domain(d3.extent(__.data, function(d) { return +d[k]; }))
-        .domain([newMin, d3.max(__.data, function(d) { return +d[k]; })])
+      return d3.scale.linear()
+        .domain(d3.extent(__.data, function(d) { return +d[k]; }))
         .range([h()+1, 1]);
     },
     "string": function(k) {
@@ -233,8 +210,8 @@ pc.autoscale = function() {
   pc.selection.selectAll("canvas")
       .style("margin-top", __.margin.top + "px")
       .style("margin-left", __.margin.left + "px")
-      .attr("width", w()+2)
-      .attr("height", h()+2);
+      .attr("width", w()+10)
+      .attr("height", h()+40); //extend canvas to have space for missing values
 
   // default styles, needs to be set when canvas width changes
   ctx.foreground.strokeStyle = __.color;
@@ -516,12 +493,11 @@ function paths(data, ctx) {
 };
 
 function single_path(d, ctx) {
-    //var arrMin = d3.min(__.data);
-    //console.log(arrMin)
 	__.dimensions.map(function(p, i) {
         if (d[p] == "") {
-            console.log("single path: ", p,  __.minValues[p] );
-            d[p] = __.minValues[p];
+            //separate axis for missing values at the bottom
+            //yval += 15;
+            //d[p] = -10;
         }
         var yval = yscale[p](d[p]);
 		if (i == 0) {
@@ -575,6 +551,13 @@ function rotateLabels() {
     pc.createAxes = function() {
   if (g) pc.removeAxes();
 
+  plotContainer = pc.svg.select("plot_container")
+      .append("path")
+      .attr("stroke", "blue")
+      .attr("d", d3.svg.line()
+          .x(0)
+          .y(h())
+          .interpolate("linear"));
   // Add a group element for each dimension.
   g = pc.svg.selectAll(".dimension")
       .data(__.dimensions, function(d) { return d; })
